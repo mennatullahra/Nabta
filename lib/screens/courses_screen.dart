@@ -3,26 +3,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/subject.dart';
 import '../models/course.dart';
 import 'lessons_screen.dart';
+import '../models/app_user.dart';
+import 'create_course_screen.dart';
 
 class CoursesScreen extends StatelessWidget {
   final Subject subject;
-  const CoursesScreen({super.key, required this.subject});
+  final AppUser user;
+  const CoursesScreen({super.key, required this.subject, required this.user});
 
-  // Temporary: adds one sample course to THIS subject.
-  Future<void> _addSampleCourse() async {
-    final course = Course(
-      id: '',
-      subjectId: subject.id,          // the link to this subject
-      teacherId: 'temp_teacher_1',
-      teacherName: 'Ms. Sara',        // the copied name
-      title: 'Introduction to ${subject.name}',
-      description: 'A friendly starter course.',
-      gradeLevel: 'Grade 4',
-      isPremium: false,
-      price: 0,
-      lessonCount: 0,
+  Future<void> _confirmDeleteCourse(BuildContext context, Course course) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete course?'),
+        content: Text('"${course.title}" will be removed.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
     );
-    await FirebaseFirestore.instance.collection('courses').add(course.toMap());
+    if (ok == true) {
+      await FirebaseFirestore.instance.collection('courses').doc(course.id).delete();
+    }
   }
 
   @override
@@ -37,11 +44,23 @@ class CoursesScreen extends StatelessWidget {
         title: Text(subject.name),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addSampleCourse,
-        tooltip: 'Add sample course',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: user.isTeacher
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateCourseScreen(
+                      subject: subject,
+                      user: user,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'New course',
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: StreamBuilder<QuerySnapshot>(
         stream: coursesQuery.snapshots(),
         builder: (context, snapshot) {
@@ -73,14 +92,31 @@ class CoursesScreen extends StatelessWidget {
                   leading: const Icon(Icons.play_circle_outline, size: 36),
                   title: Text(course.title),
                   subtitle: Text('${course.teacherName} · ${course.gradeLevel}'),
-                  trailing: course.isPremium
-                      ? const Icon(Icons.lock, size: 18)
-                      : const Text('Free'),
+                  trailing: user.isTeacher
+                      ? PopupMenuButton<String>(
+                          onSelected: (v) {
+                            if (v == 'edit') {
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => CreateCourseScreen(
+                                    subject: subject, user: user, existing: course),
+                              ));
+                            } else if (v == 'delete') {
+                              _confirmDeleteCourse(context, course);
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            PopupMenuItem(value: 'delete', child: Text('Delete')),
+                          ],
+                        )
+                      : (course.isPremium
+                          ? const Icon(Icons.lock, size: 18)
+                          : const Text('Free')),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => LessonsScreen(course: course)),
+                          builder: (_) => LessonsScreen(course: course, user: user)),
                     );
                   },
                 ),

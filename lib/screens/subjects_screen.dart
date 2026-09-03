@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/subject.dart';
 import 'courses_screen.dart';
+import '../models/app_user.dart';
+import '../services/auth_service.dart';
 
 class SubjectsScreen extends StatelessWidget {
-  const SubjectsScreen({super.key});
+  final AppUser user;
+  const SubjectsScreen({super.key, required this.user});
 
   // Maps our stored color names to real Flutter colors.
   Color _colorFor(String name) {
@@ -25,8 +28,20 @@ class SubjectsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Subjects'),
+        title: Text('Hi, ${user.name.split(' ').first} 👋'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          if (user.isTeacher)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Center(child: Chip(label: Text('Teacher'))),
+            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Log out',
+            onPressed: () => AuthService().signOut(),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: subjectsQuery.snapshots(),
@@ -66,7 +81,7 @@ class SubjectsScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => CoursesScreen(subject: subject)),
+                    MaterialPageRoute(builder: (_) => CoursesScreen(subject: subject, user: user),),
                   );
                 },
                 child: Container(

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/lesson.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/app_user.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final Lesson lesson;
-  const LessonDetailScreen({super.key, required this.lesson});
+  final AppUser user;
+  const LessonDetailScreen({super.key, required this.lesson, required this.user});
 
   @override
   State<LessonDetailScreen> createState() => _LessonDetailScreenState();
@@ -14,10 +17,35 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   final Set<int> _flipped = {};        // which cards show their back
   late final List<int?> _selected;     // chosen answer per question (null = none)
 
+bool _completed = false;
+
+DocumentReference<Map<String, dynamic>> get _progressRef =>
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .collection('completedLessons')
+        .doc(widget.lesson.id);
+
   @override
   void initState() {
     super.initState();
     _selected = List<int?>.filled(widget.lesson.questions.length, null);
+    if (!widget.user.isTeacher) _loadCompletion();
+  }
+
+  Future<void> _loadCompletion() async {
+    final doc = await _progressRef.get();
+    if (mounted) setState(() => _completed = doc.exists);
+  }
+
+  Future<void> _toggleComplete() async {
+    final wasDone = _completed;
+    setState(() => _completed = !wasDone);
+    if (wasDone) {
+      await _progressRef.delete();
+    } else {
+      await _progressRef.set({'completedAt': FieldValue.serverTimestamp()});
+    }
   }
 
   Future<void> _openVideo() async {
@@ -123,6 +151,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
             );
           }),
+          if (!widget.user.isTeacher) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _toggleComplete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _completed ? Colors.green : null,
+                  foregroundColor: _completed ? Colors.white : null,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                icon: Icon(
+                    _completed ? Icons.check_circle : Icons.check_circle_outline),
+                label: Text(_completed ? 'Completed' : 'Mark as complete'),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
         ],
       ),
