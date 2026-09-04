@@ -207,49 +207,39 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       }
                     }),
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 10), // Keeps your card spacing
-                      padding: const EdgeInsets.all(16.0), // Your updated padding
+                      margin: const EdgeInsets.only(bottom: 10),
+                      height: 100,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white, // Your new white card color
-                        borderRadius: const BorderRadius.all(Radius.circular(10)), // Your new 10px radius
+                        color: showBack
+                            ? const Color(0xFFDCEBFF)
+                            : const Color(0xFFFFF0CF),
+                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1), // Your ultra-light shadow
-                            spreadRadius: 0,
-                            blurRadius: 10,
-                            offset: const Offset(0, -5), // Pushes the shadow ABOVE the card
-                          ),
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3)),
                         ],
                       ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min, // Allows the card to size itself nicely
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // 1. Header Text (Question / Answer)
-                          Text(
-                            showBack ? 'Answer' : 'Question',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: showBack ? const Color(0xFF2A6BB0) : const Color(0xFF9A6B00),
-                            ),
-                          ),
+                          Text(showBack ? 'Answer' : 'Question',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: showBack
+                                      ? const Color(0xFF2A6BB0)
+                                      : const Color(0xFF9A6B00))),
                           const SizedBox(height: 6),
-                          
-                          // 2. Main Content Text (Dynamic font color included here)
-                          Text(
-                            showBack ? card.back : card.front,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: Color(0xFF23405C), // Added your custom dark blue color here
-                            ),
-                          ),
+                          Text(showBack ? card.back : card.front,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 16)),
                         ],
                       ),
                     ),
-
                   );
                 }),
               ],

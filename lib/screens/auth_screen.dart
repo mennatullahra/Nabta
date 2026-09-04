@@ -94,7 +94,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 🖼️ WELCOME MASCOT — chick
-                    const AppImage('chick.png',
+                    const AppImage('nabta.png',
                         width: 120, ring: false, placeholderEmoji: '🐥'),
                     const SizedBox(height: 12),
                     const Text('Nabta',
