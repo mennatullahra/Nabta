@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/course.dart';
+import '../models/unit.dart';
 import '../models/lesson.dart';
 import '../models/app_user.dart';
 import '../theme/app_theme.dart';
@@ -8,14 +8,15 @@ import 'lesson_detail_screen.dart';
 import 'create_lesson_screen.dart';
 
 class LessonsScreen extends StatelessWidget {
-  final Course course;
+  final Unit unit;
   final AppUser user;
-  const LessonsScreen({super.key, required this.course, required this.user});
+  const LessonsScreen({super.key, required this.unit, required this.user});
 
+  // Lessons live under the unit doc (in the 'courses' collection).
   CollectionReference<Map<String, dynamic>> get _lessonsRef =>
       FirebaseFirestore.instance
           .collection('courses')
-          .doc(course.id)
+          .doc(unit.id)
           .collection('lessons');
 
   Future<void> _confirmDeleteLesson(BuildContext context, Lesson lesson) async {
@@ -30,8 +31,8 @@ class LessonsScreen extends StatelessWidget {
               child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete',
-                  style: TextStyle(color: Colors.red))),
+              child:
+                  const Text('Delete', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -43,14 +44,13 @@ class LessonsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(course.title)),
+      appBar: AppBar(title: Text(unit.title)),
       floatingActionButton: user.isTeacher
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      CreateLessonScreen(course: course, user: user),
+                  builder: (_) => CreateLessonScreen(unit: unit, user: user),
                 ),
               ),
               icon: const Icon(Icons.add),
@@ -126,19 +126,14 @@ class LessonsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                pct == 1.0
-                                    ? 'All done! 🏆'
-                                    : 'Your progress',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700),
-                              ),
-                              Text('$doneCount / ${lessons.length}',
+                              Text(pct == 1.0 ? 'All done! 🏆' : 'Your progress',
                                   style: const TextStyle(
-                                      color: Colors.black54)),
+                                      fontWeight: FontWeight.w700)),
+                              Text('$doneCount / ${lessons.length}',
+                                  style:
+                                      const TextStyle(color: Colors.black54)),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -148,8 +143,8 @@ class LessonsScreen extends StatelessWidget {
                               value: pct,
                               minHeight: 12,
                               backgroundColor: const Color(0xFFE8F1E8),
-                              valueColor: const AlwaysStoppedAnimation(
-                                  AppTheme.seed),
+                              valueColor:
+                                  const AlwaysStoppedAnimation(AppTheme.seed),
                             ),
                           ),
                         ],
@@ -190,7 +185,7 @@ class LessonsScreen extends StatelessWidget {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600)),
                             subtitle: Text(
-                                '${lesson.keyPoints.length} key points · ${lesson.questions.length} questions'),
+                                '${lesson.blocks.length} sections · ${lesson.videoCount} videos · ${lesson.questionCount} questions'),
                             trailing: user.isTeacher
                                 ? PopupMenuButton<String>(
                                     onSelected: (v) {
@@ -198,9 +193,8 @@ class LessonsScreen extends StatelessWidget {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) =>
-                                                CreateLessonScreen(
-                                              course: course,
+                                            builder: (_) => CreateLessonScreen(
+                                              unit: unit,
                                               user: user,
                                               existing: lesson,
                                             ),

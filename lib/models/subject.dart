@@ -4,6 +4,7 @@ class Subject {
   final String nameAr;
   final String iconColor;
   final int order;
+  final String grade; // e.g. 'Grade 4'; empty = shown to all grades
 
   Subject({
     required this.id,
@@ -11,6 +12,7 @@ class Subject {
     required this.nameAr,
     required this.iconColor,
     required this.order,
+    this.grade = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -19,6 +21,7 @@ class Subject {
       'nameAr': nameAr,
       'iconColor': iconColor,
       'order': order,
+      'grade': grade,
     };
   }
 
@@ -29,6 +32,7 @@ class Subject {
       nameAr: map['nameAr'] ?? '',
       iconColor: map['iconColor'] ?? 'green',
       order: map['order'] ?? 0,
+      grade: (map['grade'] ?? '').toString(),
     );
   }
 }

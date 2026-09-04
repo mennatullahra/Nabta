@@ -1,4 +1,4 @@
-# courses_app
+# nabta
 
 A new Flutter project.
 

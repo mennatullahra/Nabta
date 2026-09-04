@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/kid_helpers.dart';
 import '../widgets/app_image.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _code = TextEditingController();
+  String _grade = kGrades.first;
 
   bool _isLogin = true;
   bool _busy = false;
@@ -27,7 +28,6 @@ class _AuthScreenState extends State<AuthScreen> {
     _name.dispose();
     _email.dispose();
     _password.dispose();
-    _code.dispose();
     super.dispose();
   }
 
@@ -44,7 +44,7 @@ class _AuthScreenState extends State<AuthScreen> {
           name: _name.text,
           email: _email.text,
           password: _password.text,
-          enteredTeacherCode: _code.text,
+          grade: _grade,
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -68,6 +68,8 @@ class _AuthScreenState extends State<AuthScreen> {
       case 'wrong-password':
       case 'invalid-credential':
         return 'Wrong email or password. Try again.';
+      case 'network-request-failed':
+        return 'No internet connection. Please try again.';
       default:
         return fallback ?? 'Something went wrong.';
     }
@@ -93,17 +95,16 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 🖼️ WELCOME MASCOT — chick
                     const AppImage('nabta.png',
-                        width: 120, ring: false, placeholderEmoji: '🐥'),
+                        width: 120, ring: false),
                     const SizedBox(height: 12),
                     const Text('Nabta',
                         style: TextStyle(
                             fontSize: 36, fontWeight: FontWeight.w800)),
                     Text(
                       _isLogin ? 'Welcome back! 👋' : 'Let\'s get started! 🚀',
-                      style: const TextStyle(
-                          fontSize: 16, color: Colors.black54),
+                      style:
+                          const TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                     const SizedBox(height: 24),
                     Card(
@@ -141,13 +142,18 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             if (!_isLogin) ...[
                               const SizedBox(height: 14),
-                              TextField(
-                                controller: _code,
+                              DropdownButtonFormField<String>(
+                                initialValue: _grade,
                                 decoration: const InputDecoration(
-                                  labelText: 'Teacher code (optional)',
-                                  helperText: 'Leave blank to join as a student',
-                                  prefixIcon: Icon(Icons.badge_outlined),
+                                  labelText: 'Your grade',
+                                  prefixIcon: Icon(Icons.school_outlined),
                                 ),
+                                items: kGrades
+                                    .map((g) => DropdownMenuItem(
+                                        value: g, child: Text(g)))
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _grade = v ?? kGrades.first),
                               ),
                             ],
                             if (_error != null) ...[
@@ -160,12 +166,10 @@ class _AuthScreenState extends State<AuthScreen> {
                                       AppTheme.coral.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Text(
-                                  _error!,
-                                  style: const TextStyle(
-                                      color: Color(0xFFC0392B)),
-                                  textAlign: TextAlign.center,
-                                ),
+                                child: Text(_error!,
+                                    style: const TextStyle(
+                                        color: Color(0xFFC0392B)),
+                                    textAlign: TextAlign.center),
                               ),
                             ],
                             const SizedBox(height: 20),
@@ -179,8 +183,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         width: 22,
                                         child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            color: Colors.white),
-                                      )
+                                            color: Colors.white))
                                     : Text(_isLogin ? 'Log in' : 'Sign up'),
                               ),
                             ),

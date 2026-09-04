@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 
-/// Maps a stored color name to a bright, kid-friendly color.
+/// Grades offered in the app (primary school).
+const List<String> kGrades = [
+  'Grade 1',
+  'Grade 2',
+  'Grade 3',
+  'Grade 4',
+  'Grade 5',
+  'Grade 6',
+];
+
+/// Color keys a teacher can pick for a subject tile.
+const List<String> kSubjectColorKeys = [
+  'blue',
+  'green',
+  'amber',
+  'coral',
+  'purple',
+  'pink',
+  'teal',
+];
+
 Color subjectColor(String key) {
   switch (key) {
     case 'blue':
@@ -22,7 +42,6 @@ Color subjectColor(String key) {
   }
 }
 
-/// Picks a fun emoji for a subject based on its name (English or Arabic).
 String subjectEmoji(String name) {
   final n = name.toLowerCase();
   if (n.contains('math') || n.contains('رياض')) return '🔢';
@@ -34,16 +53,10 @@ String subjectEmoji(String name) {
   if (n.contains('hist') || n.contains('تاريخ')) return '🏛️';
   if (n.contains('geo') || n.contains('جغراف')) return '🌍';
   if (n.contains('music') || n.contains('موسيق')) return '🎵';
-  if (n.contains('sport') || n.contains('رياضة بدن') || n.contains('gym')) {
-    return '⚽';
-  }
-  if (n.contains('comput') || n.contains('حاسب') || n.contains('برمج')) {
-    return '💻';
-  }
+  if (n.contains('comput') || n.contains('حاسب') || n.contains('برمج')) return '💻';
   return '📚';
 }
 
-/// A cheerful line of praise, rotated by a number (e.g. score).
 String praise(int seed) {
   const lines = [
     'Awesome! 🎉',

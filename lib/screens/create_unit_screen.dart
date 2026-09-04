@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/subject.dart';
 import '../models/app_user.dart';
-import '../models/course.dart';
+import '../models/unit.dart';
 
-class CreateCourseScreen extends StatefulWidget {
+class CreateUnitScreen extends StatefulWidget {
   final Subject subject;
   final AppUser user;
-  final Course? existing;
-  const CreateCourseScreen({
+  final Unit? existing;
+  const CreateUnitScreen({
     super.key,
     required this.subject,
     required this.user,
@@ -16,14 +16,13 @@ class CreateCourseScreen extends StatefulWidget {
   });
 
   @override
-  State<CreateCourseScreen> createState() => _CreateCourseScreenState();
+  State<CreateUnitScreen> createState() => _CreateUnitScreenState();
 }
 
-class _CreateCourseScreenState extends State<CreateCourseScreen> {
+class _CreateUnitScreenState extends State<CreateUnitScreen> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
-  final _gradeLevel = TextEditingController();
   bool _saving = false;
 
   @override
@@ -33,7 +32,6 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
     if (e != null) {
       _title.text = e.title;
       _description.text = e.description;
-      _gradeLevel.text = e.gradeLevel;
     }
   }
 
@@ -41,7 +39,6 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
   void dispose() {
     _title.dispose();
     _description.dispose();
-    _gradeLevel.dispose();
     super.dispose();
   }
 
@@ -49,14 +46,15 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      final course = Course(
+      // Unit inherits its grade from the subject.
+      final unit = Unit(
         id: widget.existing?.id ?? '',
         subjectId: widget.subject.id,
         teacherId: widget.existing?.teacherId ?? widget.user.uid,
         teacherName: widget.existing?.teacherName ?? widget.user.name,
         title: _title.text.trim(),
         description: _description.text.trim(),
-        gradeLevel: _gradeLevel.text.trim(),
+        gradeLevel: widget.subject.grade,
         isPremium: widget.existing?.isPremium ?? false,
         price: widget.existing?.price ?? 0,
         lessonCount: widget.existing?.lessonCount ?? 0,
@@ -64,9 +62,9 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
 
       final coll = FirebaseFirestore.instance.collection('courses');
       if (widget.existing == null) {
-        await coll.add(course.toMap());
+        await coll.add(unit.toMap());
       } else {
-        await coll.doc(widget.existing!.id).update(course.toMap());
+        await coll.doc(widget.existing!.id).update(unit.toMap());
       }
 
       if (mounted) {
@@ -74,8 +72,8 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(widget.existing == null
-                  ? 'Course created ✅'
-                  : 'Course updated ✅')),
+                  ? 'Unit created ✅'
+                  : 'Unit updated ✅')),
         );
       }
     } catch (e) {
@@ -92,8 +90,8 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
     final isEdit = widget.existing != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            isEdit ? 'Edit course' : 'New course in ${widget.subject.name}'),
+        title:
+            Text(isEdit ? 'Edit unit' : 'New unit in ${widget.subject.name}'),
       ),
       body: Form(
         key: _formKey,
@@ -102,7 +100,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
           children: [
             TextFormField(
               controller: _title,
-              decoration: const InputDecoration(labelText: 'Course title'),
+              decoration: const InputDecoration(labelText: 'Unit title'),
               validator: (v) => (v == null || v.trim().isEmpty)
                   ? 'Please enter a title'
                   : null,
@@ -116,17 +114,11 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
                   ? 'Please add a description'
                   : null,
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _gradeLevel,
-              decoration: const InputDecoration(
-                labelText: 'Grade level',
-                hintText: 'e.g. Grade 4',
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Please enter a grade'
-                  : null,
-            ),
+            if (widget.subject.grade.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text('Grade: ${widget.subject.grade} (from the subject)',
+                  style: const TextStyle(color: Colors.black54)),
+            ],
             const SizedBox(height: 26),
             SizedBox(
               height: 52,
@@ -141,7 +133,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
                     : const Icon(Icons.check),
                 label: Text(_saving
                     ? 'Saving...'
-                    : (isEdit ? 'Save changes' : 'Create course')),
+                    : (isEdit ? 'Save changes' : 'Create unit')),
               ),
             ),
           ],
