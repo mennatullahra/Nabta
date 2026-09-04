@@ -5,15 +5,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // 🔑 Only people with this code become teachers. Keep it private.
+  /// Only people who enter this code at sign-up become teachers.
+  /// Keep it private and share it only with real teachers.
   static const String teacherCode = 'NABTA-TEACHER-2026';
 
-  // A stream the app watches to know if someone is logged in.
   Stream<User?> get authState => _auth.authStateChanges();
-
   User? get currentUser => _auth.currentUser;
 
-  // SIGN UP — creates the auth account AND the users/ document with role.
   Future<void> signUp({
     required String name,
     required String email,
@@ -25,7 +23,6 @@ class AuthService {
       password: password,
     );
 
-    // Blank/wrong code = student. Correct code = teacher.
     final role =
         enteredTeacherCode.trim() == teacherCode ? 'teacher' : 'student';
 
@@ -37,18 +34,18 @@ class AuthService {
     });
   }
 
-  // SIGN IN
-  Future<void> signIn({required String email, required String password}) async {
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
     await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
   }
 
-  // SIGN OUT
   Future<void> signOut() async => _auth.signOut();
 
-  // Reads the current user's role from Firestore.
   Future<String> roleOf(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return (doc.data()?['role'] as String?) ?? 'student';

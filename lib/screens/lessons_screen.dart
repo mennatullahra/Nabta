@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/course.dart';
 import '../models/lesson.dart';
 import '../models/app_user.dart';
+import '../theme/app_theme.dart';
 import 'lesson_detail_screen.dart';
 import 'create_lesson_screen.dart';
 
@@ -29,7 +30,8 @@ class LessonsScreen extends StatelessWidget {
               child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red))),
+              child: const Text('Delete',
+                  style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -41,26 +43,20 @@ class LessonsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(course.title),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: Text(course.title)),
       floatingActionButton: user.isTeacher
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        CreateLessonScreen(course: course, user: user),
-                  ),
-                );
-              },
-              tooltip: 'New lesson',
-              child: const Icon(Icons.add),
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CreateLessonScreen(course: course, user: user),
+                ),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('New lesson'),
             )
           : null,
-      // Outer stream: this user's completed-lesson records.
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -75,7 +71,6 @@ class LessonsScreen extends StatelessWidget {
             }
           }
 
-          // Inner stream: the lessons.
           return StreamBuilder<QuerySnapshot>(
             stream: _lessonsRef.orderBy('order').snapshots(),
             builder: (context, snapshot) {
@@ -87,11 +82,21 @@ class LessonsScreen extends StatelessWidget {
               }
               final docs = snapshot.data?.docs ?? [];
               if (docs.isEmpty) {
-                return _EmptyState(
-                  icon: Icons.menu_book_outlined,
-                  message: user.isTeacher
-                      ? 'No lessons yet.\nTap + to create your first one.'
-                      : 'No lessons here yet.\nCheck back soon!',
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('📖', style: TextStyle(fontSize: 54)),
+                      const SizedBox(height: 12),
+                      Text(
+                        user.isTeacher
+                            ? 'No lessons yet.\nTap + to create your first one.'
+                            : 'No lessons here yet.\nCheck back soon!',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ],
+                  ),
                 );
               }
               final lessons = docs
@@ -100,25 +105,51 @@ class LessonsScreen extends StatelessWidget {
                   .toList();
               final doneCount =
                   lessons.where((l) => completed.contains(l.id)).length;
+              final pct = doneCount / lessons.length;
 
               return Column(
                 children: [
                   if (!user.isTeacher)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 8),
+                        ],
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('$doneCount of ${lessons.length} lessons complete',
-                              style: const TextStyle(
-                                  fontSize: 13, color: Colors.grey)),
-                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                pct == 1.0
+                                    ? 'All done! 🏆'
+                                    : 'Your progress',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              ),
+                              Text('$doneCount / ${lessons.length}',
+                                  style: const TextStyle(
+                                      color: Colors.black54)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(10),
                             child: LinearProgressIndicator(
-                              value: doneCount / lessons.length,
-                              minHeight: 8,
-                              backgroundColor: Colors.grey.shade200,
+                              value: pct,
+                              minHeight: 12,
+                              backgroundColor: const Color(0xFFE8F1E8),
+                              valueColor: const AlwaysStoppedAnimation(
+                                  AppTheme.seed),
                             ),
                           ),
                         ],
@@ -126,20 +157,38 @@ class LessonsScreen extends StatelessWidget {
                     ),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 90),
                       itemCount: lessons.length,
                       itemBuilder: (context, index) {
                         final lesson = lessons[index];
                         final isDone = completed.contains(lesson.id);
                         return Card(
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isDone ? Colors.green : null,
-                              child: isDone
-                                  ? const Icon(Icons.check, color: Colors.white)
-                                  : Text('${lesson.order}'),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            leading: Container(
+                              height: 46,
+                              width: 46,
+                              decoration: BoxDecoration(
+                                color: isDone
+                                    ? AppTheme.seed
+                                    : AppTheme.sky.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: isDone
+                                    ? const Icon(Icons.star_rounded,
+                                        color: Colors.white, size: 28)
+                                    : Text('${lesson.order}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.sky,
+                                            fontSize: 18)),
+                              ),
                             ),
-                            title: Text(lesson.title),
+                            title: Text(lesson.title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600)),
                             subtitle: Text(
                                 '${lesson.keyPoints.length} key points · ${lesson.questions.length} questions'),
                             trailing: user.isTeacher
@@ -149,7 +198,8 @@ class LessonsScreen extends StatelessWidget {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => CreateLessonScreen(
+                                            builder: (_) =>
+                                                CreateLessonScreen(
                                               course: course,
                                               user: user,
                                               existing: lesson,
@@ -164,19 +214,19 @@ class LessonsScreen extends StatelessWidget {
                                       PopupMenuItem(
                                           value: 'edit', child: Text('Edit')),
                                       PopupMenuItem(
-                                          value: 'delete', child: Text('Delete')),
+                                          value: 'delete',
+                                          child: Text('Delete')),
                                     ],
                                   )
-                                : const Icon(Icons.chevron_right),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => LessonDetailScreen(
-                                      lesson: lesson, user: user),
-                                ),
-                              );
-                            },
+                                : const Icon(Icons.chevron_right,
+                                    color: Colors.black26),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LessonDetailScreen(
+                                    lesson: lesson, user: user),
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -187,28 +237,6 @@ class LessonsScreen extends StatelessWidget {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  const _EmptyState({required this.icon, required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
-          Text(message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-        ],
       ),
     );
   }

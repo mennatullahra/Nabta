@@ -7,7 +7,7 @@ import '../models/course.dart';
 class CreateCourseScreen extends StatefulWidget {
   final Subject subject;
   final AppUser user;
-  final Course? existing;   // null = create, set = edit
+  final Course? existing;
   const CreateCourseScreen({
     super.key,
     required this.subject,
@@ -46,9 +46,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
   }
 
   Future<void> _save() async {
-    // Checks every field's validator; stops if any fails.
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _saving = true);
     try {
       final course = Course(
@@ -74,29 +72,28 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(
-              widget.existing == null ? 'Course created ✅' : 'Course updated ✅')),
+          SnackBar(
+              content: Text(widget.existing == null
+                  ? 'Course created ✅'
+                  : 'Course updated ✅')),
         );
       }
-
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.existing != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existing == null
-          ? 'New course in ${widget.subject.name}'
-          : 'Edit course'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(
+            isEdit ? 'Edit course' : 'New course in ${widget.subject.name}'),
       ),
       body: Form(
         key: _formKey,
@@ -105,19 +102,19 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
           children: [
             TextFormField(
               controller: _title,
-              decoration: const InputDecoration(
-                  labelText: 'Course title', border: OutlineInputBorder()),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+              decoration: const InputDecoration(labelText: 'Course title'),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Please enter a title'
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _description,
               maxLines: 3,
-              decoration: const InputDecoration(
-                  labelText: 'Description', border: OutlineInputBorder()),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Please add a description' : null,
+              decoration: const InputDecoration(labelText: 'Description'),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Please add a description'
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -125,24 +122,26 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
               decoration: const InputDecoration(
                 labelText: 'Grade level',
                 hintText: 'e.g. Grade 4',
-                border: OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Please enter a grade' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Please enter a grade'
+                  : null,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             SizedBox(
-              height: 50,
+              height: 52,
               child: ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
                     ? const SizedBox(
-                        height: 20, width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check),
                 label: Text(_saving
-                  ? 'Saving...'
-                  : (widget.existing == null ? 'Create course' : 'Save changes')),
+                    ? 'Saving...'
+                    : (isEdit ? 'Save changes' : 'Create course')),
               ),
             ),
           ],

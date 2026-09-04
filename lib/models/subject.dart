@@ -13,7 +13,6 @@ class Subject {
     required this.order,
   });
 
-  // Turns a Subject into a Map, so Firestore can store it.
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -23,13 +22,12 @@ class Subject {
     };
   }
 
-  // Rebuilds a Subject from a Firestore document.
   factory Subject.fromMap(String id, Map<String, dynamic> map) {
     return Subject(
       id: id,
       name: map['name'] ?? '',
       nameAr: map['nameAr'] ?? '',
-      iconColor: map['iconColor'] ?? '',
+      iconColor: map['iconColor'] ?? 'green',
       order: map['order'] ?? 0,
     );
   }
